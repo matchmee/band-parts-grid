@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Worship Band Parts Grid</title>
+<style>
+  :root{
+    --bg:#f4f2ee; --card:#ffffff; --ink:#2b2a27; --muted:#8a857c;
+    --accent:#7a5c3e; --accent-soft:#efe7dc; --line:#e4dfd6;
+    --chip:#f0ece4; --chip-on:#7a5c3e;
+    --out:#f3f3f1; --light:#eef3ea; --build:#fdf3e0; --full:#e8f0e4;
+    --danger:#a04b3c;
+    --radius:14px;
+    font-size:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+  button{font-family:inherit;cursor:pointer}
+  input,textarea,select{font-family:inherit;font-size:1rem;color:var(--ink)}
+
+  header.app{position:sticky;top:0;z-index:40;background:rgba(244,242,238,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:.7rem 1rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+  header.app h1{font-size:1.02rem;margin:0;font-weight:700;letter-spacing:.02em}
+  header.app .sub{color:var(--muted);font-size:.78rem}
+  .spacer{flex:1}
+  .btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:.5rem .8rem;font-size:.85rem;font-weight:600;color:var(--ink)}
+  .btn:hover{border-color:var(--accent)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.ghost{background:transparent}
+  .btn.danger{color:var(--danger);border-color:#e5cfc9}
+  .btn.small{padding:.32rem .6rem;font-size:.78rem;border-radius:8px}
+
+  main{max-width:1100px;margin:0 auto;padding:1rem}
+
+  /* ===== Library ===== */
+  .lib-head{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin:.4rem 0 1rem}
+  .lib-head h2{margin:0;font-size:1.25rem}
+  .song-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.8rem}
+  .song-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:1rem;display:flex;flex-direction:column;gap:.35rem;text-align:left;transition:box-shadow .15s}
+  .song-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.06)}
+  .song-card .t{font-weight:700;font-size:1.02rem}
+  .song-card .m{color:var(--muted);font-size:.8rem}
+  .song-card .row{display:flex;gap:.4rem;margin-top:.5rem}
+  .empty{color:var(--muted);text-align:center;padding:3rem 1rem;border:1.5px dashed var(--line);border-radius:var(--radius)}
+
+  /* ===== Editor ===== */
+  .meta{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:.5rem;margin-bottom:.8rem}
+  .meta label{display:flex;flex-direction:column;gap:.2rem;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .meta input{border:1px solid var(--line);border-radius:8px;padding:.5rem .6rem;background:var(--card)}
+  @media(max-width:760px){.meta{grid-template-columns:1fr 1fr}}
+
+  .toolbar{display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.8rem}
+
+  .grid-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);-webkit-overflow-scrolling:touch}
+  table.grid{border-collapse:separate;border-spacing:0;width:100%;min-width:calc(140px + var(--cols,10)*118px)}
+  table.grid th,table.grid td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:0;vertical-align:top}
+  table.grid tr>*:last-child{border-right:none}
+  table.grid tbody tr:last-child>*{border-bottom:none}
+  th.corner{position:sticky;left:0;z-index:3;background:var(--accent-soft);min-width:140px;padding:.55rem .6rem;text-align:left;font-size:.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:.05em}
+  th.sec{background:var(--accent-soft);min-width:118px}
+  th.sec button{width:100%;border:none;background:transparent;padding:.55rem .5rem;font-weight:700;font-size:.82rem;color:var(--accent)}
+  th.inst{position:sticky;left:0;z-index:2;background:#faf8f4;min-width:140px;text-align:left}
+  th.inst button{width:100%;text-align:left;border:none;background:transparent;padding:.6rem .6rem;font-weight:700;font-size:.84rem;color:var(--ink)}
+  td.cell button{display:block;width:100%;min-height:52px;border:none;background:transparent;text-align:left;padding:.45rem .5rem;font-size:.8rem;line-height:1.3;color:var(--ink);white-space:pre-wrap;word-break:break-word}
+  td.cell button:hover{outline:2px solid var(--accent);outline-offset:-2px;border-radius:4px}
+  td.cell .ph{color:#c9c3b8}
+  td.cell.i-out{background:var(--out);color:var(--muted)}
+  td.cell.i-light{background:var(--light)}
+  td.cell.i-build{background:var(--build)}
+  td.cell.i-full{background:var(--full)}
+
+  .legend{display:flex;gap:.9rem;flex-wrap:wrap;margin:.55rem .2rem;color:var(--muted);font-size:.74rem;align-items:center}
+  .legend .sw{display:inline-block;width:.85rem;height:.85rem;border-radius:4px;border:1px solid var(--line);vertical-align:-2px;margin-right:.3rem}
+
+  .notes{margin-top:1rem}
+  .notes label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .notes textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:var(--radius);padding:.7rem;background:var(--card);margin-top:.3rem;resize:vertical}
+
+  /* ===== Modals / sheets ===== */
+  .overlay{position:fixed;inset:0;background:rgba(30,26,20,.42);z-index:60;display:flex;align-items:flex-end;justify-content:center}
+  @media(min-width:640px){.overlay{align-items:center}}
+  .sheet{background:var(--card);border-radius:18px 18px 0 0;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;padding:1.1rem 1.1rem 1.4rem;box-shadow:0 -8px 30px rgba(0,0,0,.15)}
+  @media(min-width:640px){.sheet{border-radius:18px}}
+  .sheet h3{margin:.1rem 0 .15rem;font-size:1.05rem}
+  .sheet .where{color:var(--muted);font-size:.82rem;margin-bottom:.7rem}
+  .chipgroup{margin:.55rem 0}
+  .chipgroup .gl{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem}
+  .chips{display:flex;flex-wrap:wrap;gap:.4rem}
+  .chip{border:1px solid var(--line);background:var(--chip);border-radius:999px;padding:.35rem .75rem;font-size:.82rem;font-weight:600}
+  .chip:active{transform:scale(.96)}
+  .chip.on{background:var(--chip-on);border-color:var(--chip-on);color:#fff}
+  .sheet textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:10px;padding:.6rem;margin-top:.6rem;resize:vertical}
+  .sheet .actions{display:flex;gap:.5rem;margin-top:.9rem;flex-wrap:wrap}
+  .sheet .actions .spacer{flex:1}
+  .sheet input.rn{width:100%;border:1px solid var(--line);border-radius:10px;padding:.6rem;margin:.4rem 0 .6rem}
+  .sheet .hint{color:var(--muted);font-size:.78rem;margin-top:.4rem}
+
+  /* ===== Tips panel ===== */
+  .tips{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:1.1rem 1.2rem;margin-bottom:1rem}
+  .tips h3{margin:.2rem 0 .4rem;font-size:1rem}
+  .tips h4{margin:.9rem 0 .3rem;font-size:.86rem;color:var(--accent)}
+  .tips p,.tips li{font-size:.86rem;line-height:1.55;color:#4c473f}
+  .tips ol,.tips ul{padding-left:1.2rem;margin:.3rem 0}
+  .tips details{border-top:1px solid var(--line);padding:.45rem 0}
+  .tips summary{font-weight:700;font-size:.86rem;cursor:pointer;padding:.2rem 0}
+  .tips .close-row{display:flex;justify-content:flex-end}
+
+  /* ===== Print ===== */
+  @media print{
+    header.app,.toolbar,.legend,.tips,.lib-head,.no-print{display:none!important}
+    body{background:#fff}
+    main{max-width:none;padding:0}
+    .grid-wrap{border:1px solid #999;border-radius:0;overflow:visible}
+    table.grid{min-width:0;width:100%}
+    table.grid th,table.grid td{border-color:#999}
+    td.cell button{min-height:34px;font-size:.72rem}
+    .print-title{display:block!important;font-size:1.1rem;font-weight:700;margin-bottom:.35rem}
+    .print-meta{display:block!important;font-size:.85rem;margin-bottom:.6rem}
+    .meta{display:none}
+    .notes textarea{border:1px solid #999;border-radius:0}
+  }
+  .print-title,.print-meta{display:none}
+</style>
+</head>
+<body>
+
+<header class="app">
+  <div>
+    <h1>🎵 Worship Band Parts Grid</h1>
+    <div class="sub">Listen. Map the parts. Think like a Music Director.</div>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn small" id="btnTips">🎧 Training Tips</button>
+  <button class="btn small" id="btnHome" style="display:none">← My Songs</button>
+</header>
+
+<main>
+  <!-- Training tips -->
+  <section class="tips" id="tipsPanel" style="display:none">
+    <div class="close-row"><button class="btn small ghost" onclick="toggleTips(false)">✕ Close</button></div>
+    <h3>How to use this tool as MD training</h3>
+    <ol>
+      <li><strong>Listen once through without writing.</strong> Just feel the arc — where is the song smallest? Where is it biggest?</li>
+      <li><strong>Second listen: map one instrument at a time.</strong> Follow just the drums through the whole song, then just the bass, and so on. Fill in that row as you go.</li>
+      <li><strong>Third listen: check transitions.</strong> How does each section hand off to the next — a fill, a drop, a build, a hard stop?</li>
+      <li><strong>Zoom out.</strong> Read your grid top to bottom per column. Does each section have a clear size? If everything is "Full," nothing is.</li>
+    </ol>
+    <h4>The MD questions to ask in every section</h4>
+    <ul>
+      <li>Who is <em>carrying</em> this section (the main rhythmic or melodic engine)?</li>
+      <li>Who is <em>coloring</em> it (pads, swells, textures)?</li>
+      <li>Who is <em>out</em> — and why does the silence help?</li>
+      <li>What changes between Chorus 1 and Chorus 2? Something should.</li>
+      <li>Where is the dynamic peak of the song, and how do the parts create it?</li>
+    </ul>
+    <details><summary>🥁 Drums — what to listen for</summary>
+      <p>Is it full kit, hats only, cross-stick, or toms? Half-time vs. straight time? Where do the big fills land, and does the kick pattern change between verse and chorus? Drums define the size of every section more than any other instrument.</p>
+    </details>
+    <details><summary>🎸 Bass — what to listen for</summary>
+      <p>Whole notes vs. moving groove. Does it sit on the root or walk? Does bass drop out in a stripped section and re-enter for impact? Bass entering with the kick is the classic "now we're big" moment.</p>
+    </details>
+    <details><summary>🪕 Acoustic — what to listen for</summary>
+      <p>Strumming pattern size: light picking, half strums, or full drive? Acoustic often is the glue in verses and gets buried (or should tuck in) during big choruses.</p>
+    </details>
+    <details><summary>🎛️ Electric — what to listen for</summary>
+      <p>Ambient swells and delay textures vs. defined riffs and lead lines. Is there a signature hook that must be covered? Power chords in the final chorus? Electric is usually the color and the peak energy.</p>
+    </details>
+    <details><summary>🎹 Keys / Synth — what to listen for</summary>
+      <p>Pads vs. piano vs. arps vs. synth bass. Keys often hold the transitions together — listen for what fills the space when other instruments drop out.</p>
+    </details>
+    <details><summary>🎤 BGVs — what to listen for</summary>
+      <p>When do harmonies enter? Usually not in Verse 1. Unison vs. stacked harmony, echoes/answers, oohs in the bridge. BGVs entering is a dynamic step up — spend it wisely.</p>
+    </details>
+    <details><summary>🪘 Aux / Percussion — what to listen for</summary>
+      <p>Shaker or tambourine adding motion, cymbal swells into sections, loops or claps. Aux usually adds energy without adding volume.</p>
+    </details>
+    <h4>Rule of thumb</h4>
+    <p>A great arrangement is a story of <strong>space</strong>: it earns the big moments by getting small first. If your grid shows everyone playing everything all the time, listen again.</p>
+  </section>
+
+  <!-- Library view -->
+  <section id="viewLib">
+    <div class="lib-head">
+      <h2>My Songs</h2>
+      <div class="spacer"></div>
+      <button class="btn primary" id="btnNew">+ New Song</button>
+      <button class="btn" id="btnImport">Import</button>
+      <button class="btn" id="btnExportAll">Export All</button>
+      <input type="file" id="fileImport" accept=".json,application/json" style="display:none">
+    </div>
+    <div class="song-list" id="songList"></div>
+    <div class="empty" id="libEmpty" style="display:none">No songs yet. Tap <strong>+ New Song</strong> to start charting.</div>
+  </section>
+
+  <!-- Editor view -->
+  <section id="viewEdit" style="display:none">
+    <div class="print-title" id="printTitle"></div>
+    <div class="print-meta" id="printMeta"></div>
+
+    <div class="meta">
+      <label>Song <input id="mTitle" placeholder="Song title"></label>
+      <label>Key <input id="mKey" placeholder="e.g. G"></label>
+      <label>Tempo <input id="mTempo" placeholder="e.g. 72 BPM"></label>
+      <label>Date <input id="mDate" placeholder="mm/dd/yyyy"></label>
+      <label>Leader <input id="mLeader" placeholder="Worship leader"></label>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn small" id="btnAddSec">+ Section</button>
+      <button class="btn small" id="btnAddInst">+ Instrument</button>
+      <div class="spacer"></div>
+      <button class="btn small" id="btnPrint">🖨️ Print / PDF</button>
+      <button class="btn small" id="btnExportSong">⬇︎ Export Song</button>
+      <button class="btn small danger" id="btnClearGrid">Clear Grid</button>
+    </div>
+
+    <div class="grid-wrap"><table class="grid" id="grid"></table></div>
+
+    <div class="legend">
+      <span>Tap a cell to fill it. Tap a section or instrument name to rename / move / delete.</span>
+      <span><span class="sw" style="background:var(--out)"></span>Out</span>
+      <span><span class="sw" style="background:var(--light)"></span>Light</span>
+      <span><span class="sw" style="background:var(--build)"></span>Build</span>
+      <span><span class="sw" style="background:var(--full)"></span>Full</span>
+    </div>
+
+    <div class="notes">
+      <label for="mNotes">General Notes / Cues</label>
+      <textarea id="mNotes" placeholder="Transitions, click/loop notes, vocal cues, moments to watch the leader…"></textarea>
+    </div>
+  </section>
+</main>
+
+<div id="modalRoot"></div>
+
+<script>
+"use strict";
+/* ============ storage ============ */
+const LS_KEY = "worshipBandPartsGrid.v1";
+const uid = () => Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4);
+
+const DEFAULT_SECTIONS = ["Intro","Verse 1","Pre-Chorus 1","Chorus 1","Verse 2","Pre-Chorus 2","Chorus 2","Bridge","Chorus 3","Outro"];
+const DEFAULT_INSTRUMENTS = ["Drums","Bass","Acoustic Guitar","Electric Guitar","Synth / Keys","Background Vocals","Auxiliary / Percussion"];
+
+const CHIP_COMMON = ["In","Out","Build","Drop","Light","Medium","Full","Feature","Follow leader"];
+const CHIP_BY_INST = {
+  "drums":["Hats only","Kick only","Cross-stick","Toms","Ride","Full kit","Half-time","Double-time","Big fill","Cymbal swell"],
+  "bass":["Whole notes","Roots","Pedal tone","Groove","Octaves","Fills","With kick"],
+  "acoustic":["Light picking","Arpeggios","Half strum","Full strum","Drive","Mutes / chops","Capo riff"],
+  "electric":["Ambient swells","Delay texture","Lead riff","Hook line","Power chords","Octaves","Arps","Solo","Big wall"],
+  "keys":["Pads","Piano","Arps","Lead line","Strings","Synth bass","Organ","Pulse"],
+  "vocal":["Unison","Harmony","Oohs / Ahs","Echoes","Full stack","Melody only","Ad libs"],
+  "percussion":["Shaker","Tambourine","Toms","Cymbal swell","Claps","Loop","Djembe"],
+  "aux":["Shaker","Tambourine","Toms","Cymbal swell","Claps","Loop","Djembe"]
+};
+function chipsFor(instName){
+  const n = (instName||"").toLowerCase();
+  for(const k in CHIP_BY_INST){ if(n.includes(k)) return CHIP_BY_INST[k]; }
+  if(n.includes("guitar")) return CHIP_BY_INST["acoustic"];
+  if(n.includes("piano")||n.includes("synth")) return CHIP_BY_INST["keys"];
+  if(n.includes("bgv")||n.includes("choir")||n.includes("vox")) return CHIP_BY_INST["vocal"];
+  return [];
+}
+
+function newSong(title){
+  return {
+    id: uid(), title: title||"", key:"", tempo:"", date:"", leader:"",
+    sections: DEFAULT_SECTIONS.map(n=>({id:uid(),name:n})),
+    instruments: DEFAULT_INSTRUMENTS.map(n=>({id:uid(),name:n})),
+    cells:{}, notes:"", updated: Date.now()
+  };
+}
+
+function sampleSong(){
+  const s = newSong("Example — Study Chart");
+  s.key="G"; s.tempo="72 BPM"; s.leader="(Training example)";
+  const get=(name,list)=>list.find(x=>x.name===name).id;
+  const S=n=>get(n,s.sections), I=n=>get(n,s.instruments);
+  const set=(i,sec,v)=>{s.cells[i+":"+sec]=v;};
+  set(I("Drums"),S("Intro"),"Out");
+  set(I("Drums"),S("Verse 1"),"Out");
+  set(I("Drums"),S("Pre-Chorus 1"),"Cross-stick, Build");
+  set(I("Drums"),S("Chorus 1"),"Full kit, Medium");
+  set(I("Drums"),S("Verse 2"),"Hats only, Light");
+  set(I("Drums"),S("Pre-Chorus 2"),"Toms, Build");
+  set(I("Drums"),S("Chorus 2"),"Full kit, Full");
+  set(I("Drums"),S("Bridge"),"Half-time, Build ×2");
+  set(I("Drums"),S("Chorus 3"),"Full, Big fill into it");
+  set(I("Drums"),S("Outro"),"Cymbal swell, Out");
+  set(I("Bass"),S("Intro"),"Out");
+  set(I("Bass"),S("Verse 1"),"Out");
+  set(I("Bass"),S("Pre-Chorus 1"),"Whole notes, In");
+  set(I("Bass"),S("Chorus 1"),"Roots, With kick");
+  set(I("Bass"),S("Verse 2"),"Whole notes, Light");
+  set(I("Bass"),S("Pre-Chorus 2"),"Groove, Build");
+  set(I("Bass"),S("Chorus 2"),"Groove, Full");
+  set(I("Bass"),S("Bridge"),"Pedal tone");
+  set(I("Bass"),S("Chorus 3"),"Octaves, Full");
+  set(I("Bass"),S("Outro"),"Whole notes, Out");
+  set(I("Acoustic Guitar"),S("Intro"),"Light picking");
+  set(I("Acoustic Guitar"),S("Verse 1"),"Light picking");
+  set(I("Acoustic Guitar"),S("Pre-Chorus 1"),"Half strum, Build");
+  set(I("Acoustic Guitar"),S("Chorus 1"),"Full strum");
+  set(I("Acoustic Guitar"),S("Verse 2"),"Half strum, Light");
+  set(I("Acoustic Guitar"),S("Pre-Chorus 2"),"Full strum, Build");
+  set(I("Acoustic Guitar"),S("Chorus 2"),"Drive, Full");
+  set(I("Acoustic Guitar"),S("Bridge"),"Mutes / chops");
+  set(I("Acoustic Guitar"),S("Chorus 3"),"Drive, Full");
+  set(I("Acoustic Guitar"),S("Outro"),"Light picking");
+  set(I("Electric Guitar"),S("Intro"),"Ambient swells");
+  set(I("Electric Guitar"),S("Verse 1"),"Out");
+  set(I("Electric Guitar"),S("Pre-Chorus 1"),"Delay texture, Light");
+  set(I("Electric Guitar"),S("Chorus 1"),"Hook line");
+  set(I("Electric Guitar"),S("Verse 2"),"Ambient swells, Light");
+  set(I("Electric Guitar"),S("Pre-Chorus 2"),"Arps, Build");
+  set(I("Electric Guitar"),S("Chorus 2"),"Hook line, Full");
+  set(I("Electric Guitar"),S("Bridge"),"Octaves, Build");
+  set(I("Electric Guitar"),S("Chorus 3"),"Power chords, Big wall");
+  set(I("Electric Guitar"),S("Outro"),"Ambient swells");
+  set(I("Synth / Keys"),S("Intro"),"Pads, Piano melody");
+  set(I("Synth / Keys"),S("Verse 1"),"Piano, carries verse");
+  set(I("Synth / Keys"),S("Pre-Chorus 1"),"Pads, Build");
+  set(I("Synth / Keys"),S("Chorus 1"),"Piano + Pads");
+  set(I("Synth / Keys"),S("Verse 2"),"Arps, Light");
+  set(I("Synth / Keys"),S("Pre-Chorus 2"),"Strings, Build");
+  set(I("Synth / Keys"),S("Chorus 2"),"Piano + Strings, Full");
+  set(I("Synth / Keys"),S("Bridge"),"Pads only, Drop");
+  set(I("Synth / Keys"),S("Chorus 3"),"Everything, Full");
+  set(I("Synth / Keys"),S("Outro"),"Pads, ritard");
+  set(I("Background Vocals"),S("Intro"),"Out");
+  set(I("Background Vocals"),S("Verse 1"),"Out");
+  set(I("Background Vocals"),S("Pre-Chorus 1"),"Unison, In");
+  set(I("Background Vocals"),S("Chorus 1"),"Harmony");
+  set(I("Background Vocals"),S("Verse 2"),"Out");
+  set(I("Background Vocals"),S("Pre-Chorus 2"),"Unison");
+  set(I("Background Vocals"),S("Chorus 2"),"Harmony, Full");
+  set(I("Background Vocals"),S("Bridge"),"Oohs / Ahs, then Full stack");
+  set(I("Background Vocals"),S("Chorus 3"),"Full stack, Ad libs");
+  set(I("Background Vocals"),S("Outro"),"Oohs, Out");
+  set(I("Auxiliary / Percussion"),S("Intro"),"Out");
+  set(I("Auxiliary / Percussion"),S("Verse 1"),"Out");
+  set(I("Auxiliary / Percussion"),S("Pre-Chorus 1"),"Shaker, In");
+  set(I("Auxiliary / Percussion"),S("Chorus 1"),"Shaker");
+  set(I("Auxiliary / Percussion"),S("Verse 2"),"Shaker, Light");
+  set(I("Auxiliary / Percussion"),S("Pre-Chorus 2"),"Tambourine, Build");
+  set(I("Auxiliary / Percussion"),S("Chorus 2"),"Tambourine, Full");
+  set(I("Auxiliary / Percussion"),S("Bridge"),"Cymbal swell");
+  set(I("Auxiliary / Percussion"),S("Chorus 3"),"Tambourine, Full");
+  set(I("Auxiliary / Percussion"),S("Outro"),"Out");
+  s.notes = "Study this example, then chart a real song yourself. Notice the arc: small intro → medium Chorus 1 → pull back in Verse 2 → Chorus 2 bigger → Bridge builds → Chorus 3 is the peak → gentle outro. Every section has a clear size, and something changes at every chorus.";
+  return s;
+}
+
+let db = load();
+function load(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){ const d = JSON.parse(raw); if(d && Array.isArray(d.songs)) return d; }
+  }catch(e){}
+  return {songs:[sampleSong()], firstRun:true};
+}
+let saveTimer=null;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{ try{ localStorage.setItem(LS_KEY, JSON.stringify(db)); }catch(e){} }, 150);
+}
+
+let cur = null; // current song object (reference into db.songs)
+
+/* ============ helpers ============ */
+const $ = s => document.querySelector(s);
+function esc(t){ return String(t??"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function intensityClass(text){
+  const t=(text||"").toLowerCase();
+  if(!t.trim()) return "";
+  if(/\bout\b|tacet|rest/.test(t) && !/\bbuild|full|in\b/.test(t)) return "i-out";
+  if(/build|swell|rise|crescendo/.test(t)) return "i-build";
+  if(/full|big|drive|wall|peak|double-time/.test(t)) return "i-full";
+  if(/light|soft|pads only|sparse|simple|picking|cross-stick|hats only|whole notes/.test(t)) return "i-light";
+  return "";
+}
+function download(name, text){
+  const blob = new Blob([text], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();}, 400);
+}
+function safeName(t){ return (t||"song").replace(/[^\w\- ]+/g,"").trim().replace(/\s+/g,"_")||"song"; }
+
+/* ============ library view ============ */
+function showLib(){
+  cur=null;
+  $("#viewEdit").style.display="none";
+  $("#viewLib").style.display="";
+  $("#btnHome").style.display="none";
+  renderLib();
+}
+function renderLib(){
+  const list = $("#songList"); list.innerHTML="";
+  const songs = [...db.songs].sort((a,b)=>(b.updated||0)-(a.updated||0));
+  $("#libEmpty").style.display = songs.length? "none":"";
+  for(const s of songs){
+    const card = document.createElement("div");
+    card.className="song-card";
+    const meta = [s.key&&("Key "+s.key), s.tempo, s.leader].filter(Boolean).join(" · ");
+    card.innerHTML = `
+      <div class="t">${esc(s.title||"Untitled song")}</div>
+      <div class="m">${esc(meta||"—")}</div>
+      <div class="m">Updated ${new Date(s.updated||Date.now()).toLocaleDateString()}</div>
+      <div class="row">
+        <button class="btn small primary" data-a="open">Open</button>
+        <button class="btn small" data-a="dup">Duplicate</button>
+        <button class="btn small danger" data-a="del">Delete</button>
+      </div>`;
+    card.querySelector('[data-a=open]').onclick = ()=>openSong(s.id);
+    card.querySelector('[data-a=dup]').onclick = ()=>{
+      const c = JSON.parse(JSON.stringify(s));
+      c.id=uid(); c.title=(s.title||"Untitled")+" (copy)"; c.updated=Date.now();
+      // fresh ids not needed for duplicate; keep cell keys aligned with copied section ids
+      db.songs.push(c); save(); renderLib();
+    };
+    card.querySelector('[data-a=del]').onclick = ()=>{
+      confirmSheet(`Delete “${s.title||"Untitled song"}”?`, "This can't be undone.", ()=>{
+        db.songs = db.songs.filter(x=>x.id!==s.id); save(); renderLib();
+      });
+    };
+    list.appendChild(card);
+  }
+}
+
+/* ============ editor view ============ */
+function openSong(id){
+  cur = db.songs.find(s=>s.id===id);
+  if(!cur) return;
+  $("#viewLib").style.display="none";
+  $("#viewEdit").style.display="";
+  $("#btnHome").style.display="";
+  $("#mTitle").value=cur.title||""; $("#mKey").value=cur.key||"";
+  $("#mTempo").value=cur.tempo||""; $("#mDate").value=cur.date||"";
+  $("#mLeader").value=cur.leader||""; $("#mNotes").value=cur.notes||"";
+  renderGrid();
+  window.scrollTo(0,0);
+}
+function touch(){ if(cur){ cur.updated=Date.now(); save(); } }
+
+function renderGrid(){
+  const t = $("#grid");
+  t.style.setProperty("--cols", cur.sections.length);
+  let html = "<thead><tr><th class='corner'>Instrument</th>";
+  cur.sections.forEach((sec,i)=>{
+    html += `<th class="sec"><button data-sec="${i}">${esc(sec.name)}</button></th>`;
+  });
+  html += "</tr></thead><tbody>";
+  cur.instruments.forEach((inst,r)=>{
+    html += `<tr><th class="inst"><button data-inst="${r}">${esc(inst.name)}</button></th>`;
+    cur.sections.forEach((sec,c)=>{
+      const v = cur.cells[inst.id+":"+sec.id]||"";
+      html += `<td class="cell ${intensityClass(v)}"><button data-cell="${r}:${c}">${v?esc(v):'<span class="ph">·</span>'}</button></td>`;
+    });
+    html += "</tr>";
+  });
+  html += "</tbody>";
+  t.innerHTML = html;
+  t.querySelectorAll("[data-cell]").forEach(b=>b.onclick=()=>{
+    const [r,c]=b.dataset.cell.split(":").map(Number);
+    openCellSheet(r,c);
+  });
+  t.querySelectorAll("[data-sec]").forEach(b=>b.onclick=()=>openHeaderSheet("sec",+b.dataset.sec));
+  t.querySelectorAll("[data-inst]").forEach(b=>b.onclick=()=>openHeaderSheet("inst",+b.dataset.inst));
+  updatePrintHead();
+}
+function updatePrintHead(){
+  $("#printTitle").textContent = cur.title||"Untitled song";
+  $("#printMeta").textContent = ["Key: "+(cur.key||"—"),"Tempo: "+(cur.tempo||"—"),"Date: "+(cur.date||"—"),"Leader: "+(cur.leader||"—")].join("   |   ");
+}
+
+/* meta bindings */
+[["mTitle","title"],["mKey","key"],["mTempo","tempo"],["mDate","date"],["mLeader","leader"],["mNotes","notes"]].forEach(([el,k])=>{
+  document.getElementById(el).addEventListener("input", e=>{
+    if(!cur) return; cur[k]=e.target.value; touch();
+    if(k==="title"||k==="key"||k==="tempo"||k==="date"||k==="leader") updatePrintHead();
+  });
+});
+
+/* ============ modal machinery ============ */
+function openSheet(innerHTML){
+  const root = $("#modalRoot");
+  root.innerHTML = `<div class="overlay"><div class="sheet">${innerHTML}</div></div>`;
+  const ov = root.firstElementChild;
+  ov.addEventListener("click", e=>{ if(e.target===ov) closeSheet(); });
+  return ov.firstElementChild;
+}
+function closeSheet(){ $("#modalRoot").innerHTML=""; }
+function confirmSheet(title, msg, onYes){
+  const sh = openSheet(`
+    <h3>${esc(title)}</h3><div class="where">${esc(msg)}</div>
+    <div class="actions"><div class="spacer"></div>
+      <button class="btn" data-a="no">Cancel</button>
+      <button class="btn danger" data-a="yes">Delete</button></div>`);
+  sh.querySelector("[data-a=no]").onclick=closeSheet;
+  sh.querySelector("[data-a=yes]").onclick=()=>{closeSheet(); onYes();};
+}
+
+/* ============ cell editor ============ */
+function openCellSheet(r,c){
+  const inst = cur.instruments[r], sec = cur.sections[c];
+  const key = inst.id+":"+sec.id;
+  const instChips = chipsFor(inst.name);
+  const groupHTML = (label, arr) => arr.length? `
+    <div class="chipgroup"><div class="gl">${esc(label)}</div>
+      <div class="chips">${arr.map(ch=>`<button class="chip" data-chip="${esc(ch)}">${esc(ch)}</button>`).join("")}</div>
+    </div>`:"";
+  const sh = openSheet(`
+    <h3>${esc(inst.name)}</h3>
+    <div class="where">${esc(sec.name)} — ${esc(cur.title||"Untitled song")}</div>
+    ${groupHTML("Dynamics", CHIP_COMMON)}
+    ${groupHTML(inst.name+" parts", instChips)}
+    <textarea id="cellText" placeholder="Type anything… (chips add here too)">${esc(cur.cells[key]||"")}</textarea>
+    <div class="actions">
+      <button class="btn small" data-a="prev" ${c===0?"disabled":""}>← Prev</button>
+      <button class="btn small" data-a="next" ${c===cur.sections.length-1?"disabled":""}>Next →</button>
+      <div class="spacer"></div>
+      <button class="btn small danger" data-a="clear">Clear</button>
+      <button class="btn primary" data-a="done">Done</button>
+    </div>
+    <div class="hint">Tip: use Prev / Next to walk one instrument through the whole song while you listen.</div>`);
+  const ta = sh.querySelector("#cellText");
+  const syncChips = ()=>{
+    const parts = ta.value.split(",").map(x=>x.trim().toLowerCase());
+    sh.querySelectorAll(".chip").forEach(ch=>{
+      ch.classList.toggle("on", parts.includes(ch.dataset.chip.toLowerCase()));
+    });
+  };
+  const commit = ()=>{
+    const v = ta.value.trim();
+    if(v) cur.cells[key]=v; else delete cur.cells[key];
+    touch();
+  };
+  sh.querySelectorAll(".chip").forEach(ch=>ch.onclick=()=>{
+    const val = ch.dataset.chip;
+    let parts = ta.value.split(",").map(x=>x.trim()).filter(Boolean);
+    const idx = parts.findIndex(p=>p.toLowerCase()===val.toLowerCase());
+    if(idx>=0) parts.splice(idx,1); else parts.push(val);
+    ta.value = parts.join(", ");
+    syncChips();
+  });
+  ta.addEventListener("input", syncChips);
+  syncChips();
+  sh.querySelector("[data-a=done]").onclick=()=>{ commit(); closeSheet(); renderGrid(); };
+  sh.querySelector("[data-a=clear]").onclick=()=>{ ta.value=""; syncChips(); };
+  const step = d => { commit(); closeSheet(); renderGrid(); openCellSheet(r, c+d); };
+  const bPrev=sh.querySelector("[data-a=prev]"), bNext=sh.querySelector("[data-a=next]");
+  if(!bPrev.disabled) bPrev.onclick=()=>step(-1);
+  if(!bNext.disabled) bNext.onclick=()=>step(1);
+}
+
+/* ============ header editor (sections & instruments) ============ */
+function openHeaderSheet(kind, idx){
+  const isSec = kind==="sec";
+  const arr = isSec? cur.sections : cur.instruments;
+  const item = arr[idx];
+  const noun = isSec? "section" : "instrument";
+  const sh = openSheet(`
+    <h3>Edit ${noun}</h3>
+    <input class="rn" id="rnInput" value="${esc(item.name)}" placeholder="${esc(noun)} name">
+    <div class="actions">
+      <button class="btn small" data-a="left" ${idx===0?"disabled":""}>${isSec?"← Move left":"↑ Move up"}</button>
+      <button class="btn small" data-a="right" ${idx===arr.length-1?"disabled":""}>${isSec?"Move right →":"↓ Move down"}</button>
+      <button class="btn small" data-a="ins">+ Add ${noun} after</button>
+    </div>
+    <div class="actions">
+      <button class="btn small danger" data-a="del">Delete ${noun}</button>
+      <div class="spacer"></div>
+      <button class="btn primary" data-a="done">Done</button>
+    </div>`);
+  const done = ()=>{
+    const v = sh.querySelector("#rnInput").value.trim();
+    if(v) item.name=v;
+    touch(); closeSheet(); renderGrid();
+  };
+  sh.querySelector("[data-a=done]").onclick=done;
+  sh.querySelector("#rnInput").addEventListener("keydown",e=>{if(e.key==="Enter")done();});
+  const bL=sh.querySelector("[data-a=left]"), bR=sh.querySelector("[data-a=right]");
+  if(!bL.disabled) bL.onclick=()=>{ [arr[idx-1],arr[idx]]=[arr[idx],arr[idx-1]]; touch(); closeSheet(); renderGrid(); };
+  if(!bR.disabled) bR.onclick=()=>{ [arr[idx+1],arr[idx]]=[arr[idx],arr[idx+1]]; touch(); closeSheet(); renderGrid(); };
+  sh.querySelector("[data-a=ins]").onclick=()=>{
+    arr.splice(idx+1,0,{id:uid(),name:isSec?"New Section":"New Instrument"});
+    touch(); closeSheet(); renderGrid(); openHeaderSheet(kind, idx+1);
+  };
+  sh.querySelector("[data-a=del]").onclick=()=>{
+    if(arr.length<=1){ alert("You need at least one "+noun+"."); return; }
+    closeSheet();
+    confirmSheet(`Delete “${item.name}”?`, `All notes in this ${noun} will be removed.`, ()=>{
+      arr.splice(idx,1);
+      for(const k of Object.keys(cur.cells)){
+        const [i,s]=k.split(":");
+        if((isSec&&s===item.id)||(!isSec&&i===item.id)) delete cur.cells[k];
+      }
+      touch(); renderGrid();
+    });
+  };
+}
+
+/* ============ toolbar & io ============ */
+$("#btnHome").onclick=showLib;
+$("#btnNew").onclick=()=>{
+  const s = newSong("");
+  db.songs.push(s); save(); openSong(s.id);
+  setTimeout(()=>$("#mTitle").focus(),50);
+};
+$("#btnAddSec").onclick=()=>{ cur.sections.push({id:uid(),name:"New Section"}); touch(); renderGrid(); openHeaderSheet("sec",cur.sections.length-1); };
+$("#btnAddInst").onclick=()=>{ cur.instruments.push({id:uid(),name:"New Instrument"}); touch(); renderGrid(); openHeaderSheet("inst",cur.instruments.length-1); };
+$("#btnPrint").onclick=()=>window.print();
+$("#btnClearGrid").onclick=()=>confirmSheet("Clear all cells?","Song info and structure stay; all part notes are erased.",()=>{ cur.cells={}; touch(); renderGrid(); });
+$("#btnExportSong").onclick=()=>download(safeName(cur.title)+"_parts_grid.json", JSON.stringify({type:"bandPartsGrid.song",song:cur},null,2));
+$("#btnExportAll").onclick=()=>download("band_parts_grid_all_songs.json", JSON.stringify({type:"bandPartsGrid.library",songs:db.songs},null,2));
+$("#btnImport").onclick=()=>$("#fileImport").click();
+$("#fileImport").addEventListener("change", e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{
+    try{
+      const d = JSON.parse(rd.result);
+      let incoming = [];
+      if(d.type==="bandPartsGrid.song" && d.song) incoming=[d.song];
+      else if(d.type==="bandPartsGrid.library" && Array.isArray(d.songs)) incoming=d.songs;
+      else if(Array.isArray(d.songs)) incoming=d.songs;
+      else if(d.sections && d.instruments) incoming=[d];
+      if(!incoming.length) throw new Error("no songs");
+      for(const s of incoming){
+        s.id = uid(); s.updated = Date.now();
+        if(!Array.isArray(s.sections)||!Array.isArray(s.instruments)) throw new Error("bad song");
+        db.songs.push(s);
+      }
+      save(); renderLib();
+      alert("Imported "+incoming.length+" song"+(incoming.length>1?"s":"")+".");
+    }catch(err){ alert("Couldn't read that file — it doesn't look like a Band Parts Grid export."); }
+  };
+  rd.readAsText(f);
+  e.target.value="";
+});
+function toggleTips(force){
+  const p = $("#tipsPanel");
+  const show = force!==undefined? force : p.style.display==="none";
+  p.style.display = show? "" : "none";
+  if(show) window.scrollTo({top:0,behavior:"smooth"});
+}
+$("#btnTips").onclick=()=>toggleTips();
+
+/* ============ boot ============ */
+save();
+showLib();
+if(db.firstRun){ delete db.firstRun; save(); toggleTips(true); }
+</script>
+</body>
+</html>
